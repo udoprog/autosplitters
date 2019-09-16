@@ -1,13 +1,15 @@
 state("DyingLightGame")
 {
-    string255 mission: "gamedll_x64_rwdi.dll", 0x01D6D488, 0x0, 0x90, 0x50, 0x18, 0x0;
-	// from the official load remover:
-	// https://github.com/shadow2hel/Autosplitters/blob/master/DyingLight/autostartnloadless.asl
+    string255 quest: "gamedll_x64_rwdi.dll", 0x01D6D488, 0x0, 0x90, 0x50, 0x18, 0x0;
+    // from the official load remover:
+    // https://github.com/shadow2hel/Autosplitters/blob/master/DyingLight/autostartnloadless.asl
     int loading: "rd3d11_x64_rwdi.dll", 0x7D108;
 }
 
 startup
 {
+    vars.prevTimerPhase = null;
+
     settings.Add("quests", true, "Quests");
 
     settings.Add("awakening", true, "Awakening", "quests");
@@ -30,7 +32,7 @@ startup
     settings.Add("rais", true, "Pact with Rais", "quests");
     settings.Add("rais_first_antenna", false, "Split after doing the first antenna", "rais");
     settings.Add("rais_second_antenna", false, "Split after doing the second antenna", "rais");
-    settings.Add("rais_antennas", false, "Split after finishing antenna missions", "rais");
+    settings.Add("rais_antennas", false, "Split after finishing antenna quests", "rais");
     settings.Add("rais_bomber", false, "Split after encountering the bomber", "rais");
     settings.Add("rais_first_village", false, "Split after first village", "rais");
     settings.Add("rais_blueprints", false, "Split after picking up blueprints", "rais");
@@ -103,100 +105,118 @@ startup
     settings.Add("final_tower_top_section", false, "Split when reaching the last tower section", "final");
     settings.Add("final_qte", false, "Split when reaching the QTE section", "final");
 
-    vars.transitions = new Dictionary<string, string> {
-        {"Looting/Looting_02", "awakening_13th"},
-        {"SchoolOfLife/Q_Start01", "awakening_tutorial"},
-        {"Q_Start02/Blackout", "awakening_end"},
+    // Note: splits must happen in the order in which they are defined here by their setting.
+    var transitions = new List<Tuple<string, string>>() {
+        new Tuple<string, string>("Looting_02", "awakening_13th"),
+        new Tuple<string, string>("Q_Start01", "awakening_tutorial"),
+        new Tuple<string, string>("Blackout", "awakening_end"),
 
-        {"Blackout1_5/Blackout1_5b", "blackout_car_traps"},
-        {"Blackout1_5b/Blackout1_5c", "blackout_reset"},
-        {"Blackout1_5c/Blackout1_6", "blackout_sleep"},
-        // If you're really fast, or you quest warp, livesplit might miss the transition
-        // from Blackout1_6 -> Blackout_2, so we put both here.
-        {"Blackout1_6/AirDrop01", "blackout_end"},
-        {"Blackout1_6/Blackout_2", "blackout_end"},
+        new Tuple<string, string>("Blackout1_5b", "blackout_car_traps"),
+        new Tuple<string, string>("Blackout1_5c", "blackout_reset"),
+        new Tuple<string, string>("Blackout1_6", "blackout_sleep"),
+        new Tuple<string, string>("AirDrop01", "blackout_end"),
 
-        {"AirDrop01/AirDrop02", "airdrop_sunset"},
-        {"AirDrop02_2/AirDrop03", "airdrop_elevator"},
-        {"AirDrop03/PactWithRais00", "airdrop_end"},
+        new Tuple<string, string>("AirDrop02", "airdrop_sunset"),
+        new Tuple<string, string>("AirDrop03", "airdrop_elevator"),
+        new Tuple<string, string>("PactWithRais00", "airdrop_end"),
 
-        {"Q_Antennas02/Q_Antennas03", "rais_first_antenna"},
-        {"Q_Antennas03/Q_Antennas04", "rais_second_antenna"},
-        {"Antennas05/Courier01", "rais_antennas"},
-        {"Courier02/Courier02b", "rais_bomber"},
-        {"Courier02b/Courier02c", "rais_first_village"},
-        {"Courier02c/Courier02d", "rais_blueprints"},
-        {"Courier02d/SaveTheTower01", "rais_payment"},
-        {"SaveTheTower01/SaveTheTower02", "rais_antizin_drop"},
-        {"SaveTheTower02/SaveTheTower03", "rais_end"},
+        new Tuple<string, string>("Q_Antennas03", "rais_first_antenna"),
+        new Tuple<string, string>("Q_Antennas04", "rais_second_antenna"),
+        new Tuple<string, string>("Courier01", "rais_antennas"),
+        new Tuple<string, string>("Courier02b", "rais_bomber"),
+        new Tuple<string, string>("Courier02c", "rais_first_village"),
+        new Tuple<string, string>("Courier02d", "rais_blueprints"),
+        new Tuple<string, string>("SaveTheTower01", "rais_payment"),
+        new Tuple<string, string>("SaveTheTower02", "rais_antizin_drop"),
+        new Tuple<string, string>("SaveTheTower03", "rais_end"),
 
-        {"SaveTheTower03/Q_Explosives01", "siblings_rahim"},
-        {"Q_Explosives01/Q_Explosives02", "siblings_warp"},
-        {"Q_Explosives02/Q_Explosives03", "siblings_school"},
-        {"Q_Explosives03/Q_Explosives03_B", "siblings_basement_door"},
-        {"Q_Explosives03_B/Q_Explosives04", "siblings_outside"},
-        {"Q_Explosives04b/Q_Explosives05", "siblings_end"},
+        new Tuple<string, string>("Q_Explosives01", "siblings_rahim"),
+        new Tuple<string, string>("Q_Explosives02", "siblings_warp"),
+        new Tuple<string, string>("Q_Explosives03", "siblings_school"),
+        new Tuple<string, string>("Q_Explosives03_B", "siblings_basement_door"),
+        new Tuple<string, string>("Q_Explosives04", "siblings_outside"),
+        new Tuple<string, string>("Q_Explosives05", "siblings_end"),
 
-        {"PrimeHunting01/PrimeHunting02", "bolters"},
+        new Tuple<string, string>("PrimeHunting02", "bolters"),
 
-        {"Q_Demoliton01/Q_Demoliton02", "demolition_omar"},
-        {"Q_Demoliton02/Q_Demoliton02b", "demolition_door"},
-        {"Q_Demoliton02b/Q_Demoliton02c", "demolition_rahim_is_a_zombie"},
+        new Tuple<string, string>("Q_Demoliton02", "demolition_omar"),
+        new Tuple<string, string>("Q_Demoliton02b", "demolition_door"),
+        new Tuple<string, string>("Q_Demoliton02c", "demolition_rahim_is_a_zombie"),
         // splits when exiting the trainyard door.
-        {"Q_Demoliton02c/Q_Demolition05", "demolition_end"},
+        new Tuple<string, string>("Q_Demolition05", "demolition_end"),
 
-        {"Q_Demolition05/Q_Intruders01", "pit_brecken"},
-        {"Q_Intruders01/Q_Warehouse01", "pit_warehouse"},
-        {"Q_Warehouse01/Q_Warehouse02", "pit_inside"},
-        {"Q_Warehouse02/Q_Arena01", "pit_arena"},
-        {"Q_Arena01/Q_Run01", "pit_escape"},
-        {"Q_Run01/Q_Run02", "pit_escape_outside"},
-        {"Q_Run02/Q_AnotherDay_02", "pit_end"},
+        new Tuple<string, string>("Q_Intruders01", "pit_brecken"),
+        new Tuple<string, string>("Q_Warehouse01", "pit_warehouse"),
+        new Tuple<string, string>("Q_Warehouse02", "pit_inside"),
+        new Tuple<string, string>("Q_Arena01", "pit_arena"),
+        new Tuple<string, string>("Q_Run01", "pit_escape"),
+        new Tuple<string, string>("Q_Run02", "pit_escape_outside"),
+        new Tuple<string, string>("Q_AnotherDay_02", "pit_end"),
 
-        {"Q_AnotherDay_02/Saviors", "saviors_setup"},
-        {"Saviors/Saviors02", "saviors_sewer"},
-        {"Saviors03/Saviors04", "saviors_pipe"},
-        {"Saviors04/Saviors05", "saviors_sewer_exit"},
-        {"Saviors05/Saviors06", "saviors_end"},
+        new Tuple<string, string>("Saviors", "saviors_setup"),
+        new Tuple<string, string>("Saviors02", "saviors_sewer"),
+        new Tuple<string, string>("Saviors04", "saviors_pipe"),
+        new Tuple<string, string>("Saviors05", "saviors_sewer_exit"),
+        new Tuple<string, string>("Saviors06", "saviors_end"),
 
-        {"Saviors06/FindTheEmbers", "embers"},
+        new Tuple<string, string>("FindTheEmbers", "embers"),
 
-        {"University02/University03", "university"},
+        new Tuple<string, string>("University03", "university"),
 
-        {"University03/ProjectMayhem01", "mayhem_enter"},
-        {"ProjectMayhem02/ProjectMayhem03", "mayhem_elevator"},
-        {"ProjectMayhem04/ProjectMayhem05", "mayhem_last_bomb"},
-        {"ProjectMayhem05/ProjectMayhem06", "mayhem_end"},
+        new Tuple<string, string>("ProjectMayhem01", "mayhem_enter"),
+        new Tuple<string, string>("ProjectMayhem03", "mayhem_elevator"),
+        new Tuple<string, string>("ProjectMayhem05", "mayhem_last_bomb"),
+        new Tuple<string, string>("ProjectMayhem06", "mayhem_end"),
 
-        {"ProjectMayhem07/MeetingWithJade", "meeting_with_jade"},
+        new Tuple<string, string>("MeetingWithJade", "meeting_with_jade"),
 
-        {"MeetingWithJade/Museum01", "museum_custodian"},
-        {"Museum01a/Museum02", "museum_enter"},
-        {"Museum02/Museum03", "museum_dream"},
-        {"Museum03/Museum03b", "museum_dream_end"},
+        new Tuple<string, string>("Museum01", "museum_custodian"),
+        new Tuple<string, string>("Museum02", "museum_enter"),
+        new Tuple<string, string>("Museum03", "museum_dream"),
+        new Tuple<string, string>("Museum03b", "museum_dream_end"),
         // exiting the museum
-        {"Museum04/Museum05", "museum_end"},
+        new Tuple<string, string>("Museum05", "museum_end"),
 
-        {"Contact_01/Contact_02", "contact_sewer"},
-        {"Contact_02/Contact_03", "contact_savvy"},
+        new Tuple<string, string>("Contact_02", "contact_sewer"),
+        new Tuple<string, string>("Contact_03", "contact_savvy"),
         // when exiting the last door
-        {"Contact_04/Contact_05", "contact_end"},
+        new Tuple<string, string>("Contact_05", "contact_end"),
 
-        {"Clinic01/Clinic02", "clinic_enter"},
-        {"Clinic02/ContactGRE", "clinic_end"},
+        new Tuple<string, string>("Clinic02", "clinic_enter"),
+        new Tuple<string, string>("ContactGRE", "clinic_end"),
 
-        {"Final/Final_End_01_Start", "final_enter"},
-        {"Final_End_01_Start/Final_End_02_Sewer", "final_sewer"},
-        {"Final_End_03_Rais_Tower_1/Final_End_03_Rais_Tower_2", "final_tower_top_section"},
-        {"Final_End_03_Rais_Tower_2/Final_End_03_Rais_Tower", "final_qte"},
+        new Tuple<string, string>("Final_End_01_Start", "final_enter"),
+        new Tuple<string, string>("Final_End_02_Sewer", "final_sewer"),
+        new Tuple<string, string>("Final_End_03_Rais_Tower_2", "final_tower_top_section"),
+        new Tuple<string, string>("Final_End_03_Rais_Tower", "final_qte"),
     };
+
+    // calculate the allowed split order.
+    vars.splits = new Dictionary<string, string>();
+    // legal and known quest names
+    vars.order = new Dictionary<string, int>();
+
+    var currentOrder = 1;
+    var orderBySetting = new Dictionary<string, int>();
+
+    foreach (Tuple<string, string> entry in transitions) {
+        int order;
+
+        if (!orderBySetting.TryGetValue(entry.Item2, out order)) {
+            order = currentOrder++;
+            orderBySetting.Add(entry.Item2, order);
+        }
+
+        vars.splits.Add(entry.Item1, entry.Item2);
+        vars.order.Add(entry.Item1, order);
+    }
 }
 
 init
 {
-    vars.mission = "";
-    vars.lastMission = "";
-    vars.key = "";
+    vars.prevOrder = 0;
+    vars.prevQuest = "";
+    vars.split = false;
 }
 
 update
@@ -204,35 +224,47 @@ update
     vars.isLoading = false; 
     vars.isLoading = (current.loading == 240) ? true : false;
 
+    if (timer.CurrentPhase != vars.prevTimerPhase) {
+        if (timer.CurrentPhase != TimerPhase.Paused) {
+            vars.prevOrder = 0;
+            vars.prevQuest = "";
+        }
+
+        vars.prevTimerPhase = timer.CurrentPhase;
+    }
+
     // Values goes a bit all over the place when loading. This helps.
-    if (!vars.isLoading) {
-        if (current.mission != "" && current.mission != null && vars.mission != current.mission) {
-            vars.mission = current.mission;
-        }
+    if (!vars.isLoading && current.quest != null && current.quest != "" && current.quest != vars.prevQuest) {
+        int order = 0;
 
-        if (vars.lastMission != vars.mission) {
-            vars.key = vars.lastMission + "/" + vars.mission;
-            print("Test split: " + vars.key);
+        if (vars.order.TryGetValue(current.quest, out order)) {
+            // only split if mission order has strictly increased.
+            if (vars.prevOrder > 0 && vars.prevOrder < order) {
+                Dictionary<string, string> splits;
+                string split = "";
 
-            if (vars.lastMission != vars.mission) {
-                vars.lastMission = vars.mission;
+                if (vars.splits.TryGetValue(current.quest, out split)) {
+                    print("Testing split: " + split);
+                    vars.split = settings[split];
+                }
             }
-        } else {
-            vars.key = "";
+
+            if (vars.prevOrder < order) {
+                vars.prevOrder = order;
+            }
         }
+
+        print("Quest: " + current.quest);
+        // update to avoid rechecking vars.order too frequently
+        vars.prevQuest = current.quest;
     }
 }
 
 split
 {
-    if (vars.key != "") {
-        string split = "";
-
-        if (vars.transitions.TryGetValue(vars.key, out split)) {
-            if (settings[split]) {
-                return true;
-            }
-        }
+    if (vars.split) {
+        vars.split = false;
+        return true;
     }
 
     return false;
