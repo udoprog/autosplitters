@@ -239,17 +239,15 @@ update
 
         if (vars.order.TryGetValue(current.quest, out order)) {
             // only split if mission order has strictly increased.
-            if (vars.prevOrder > 0 && vars.prevOrder < order) {
-                Dictionary<string, string> splits;
+            if (vars.prevOrder < order) {
                 string split = "";
 
-                if (vars.splits.TryGetValue(current.quest, out split)) {
+                // need to test that previous quest is set to avoid splitting when resetting.
+                if (vars.prevQuest != "" && vars.splits.TryGetValue(current.quest, out split)) {
                     print("Testing split: " + split);
                     vars.split = settings[split];
                 }
-            }
 
-            if (vars.prevOrder < order) {
                 vars.prevOrder = order;
             }
         }
