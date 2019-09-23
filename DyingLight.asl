@@ -81,9 +81,10 @@ startup
     settings.Add("mayhem_enter", false, "Split when entering the sewers", "mayhem");
     settings.Add("mayhem_elevator", false, "Split when entering the elevator", "mayhem");
     settings.Add("mayhem_last_bomb", false, "Split after planting the last bomb", "mayhem");
-    settings.Add("mayhem_end", true, "Split when exiting the sewers (End)", "mayhem");
+    settings.Add("mayhem_detonator", false, "Split when picking up the detonator", "mayhem");
+    settings.Add("mayhem_end", true, "Split when exiting sewers (End)", "mayhem");
 
-    settings.Add("meeting_with_jade", false, "Rendezvous", "quests");
+    settings.Add("meeting_with_jade", false, "Split when receiving the quest to meet Jade (Rendezvous)", "quests");
 
     settings.Add("museum", true, "Museum", "quests");
     settings.Add("museum_custodian", false, "Split after talking to the custodian", "museum");
@@ -169,7 +170,8 @@ startup
         new Tuple<string, string>("ProjectMayhem01", "mayhem_enter"),
         new Tuple<string, string>("ProjectMayhem03", "mayhem_elevator"),
         new Tuple<string, string>("ProjectMayhem05", "mayhem_last_bomb"),
-        new Tuple<string, string>("ProjectMayhem06", "mayhem_end"),
+        new Tuple<string, string>("ProjectMayhem06", "mayhem_detonator"),
+        new Tuple<string, string>("ProjectMayhem07", "mayhem_end"),
 
         new Tuple<string, string>("MeetingWithJade", "meeting_with_jade"),
 
