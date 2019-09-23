@@ -100,7 +100,7 @@ startup
 
     settings.Add("clinic", true, "The Clinic", "quests");
     settings.Add("clinic_enter", false, "Split when entering the clinic", "clinic");
-    settings.Add("clinic_end", true, "Split after exiting the clinic (End)", "clinic");
+    settings.Add("clinic_end", true, "Split after exiting the clinic and talking to Camden", "clinic");
 
     settings.Add("final", true, "Extraction (Doesn't split automatically after the last QTE)", "quests");
     settings.Add("final_enter", false, "Split when entering the construction site", "final");
