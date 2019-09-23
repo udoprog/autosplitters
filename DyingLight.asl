@@ -4,6 +4,8 @@ state("DyingLightGame")
     // from the official load remover:
     // https://github.com/shadow2hel/Autosplitters/blob/master/DyingLight/autostartnloadless.asl
     int loading: "rd3d11_x64_rwdi.dll", 0x7D108;
+    // qte counter which goes up during the final fight.
+    int final_qte : "gamedll_x64_rwdi.dll", 0x01D5E5E0, 0x0, 0x48, 0x8, 0xDC;
 }
 
 startup
@@ -104,6 +106,7 @@ startup
     settings.Add("final_sewer", false, "Split when entering the sewer", "final");
     settings.Add("final_tower_top_section", false, "Split when reaching the last tower section", "final");
     settings.Add("final_qte", false, "Split when reaching the QTE section", "final");
+    settings.Add("final_end", true, "Split after last QTE (End)", "final");
 
     // Note: splits must happen in the order in which they are defined here by their setting.
     var transitions = new List<Tuple<string, string>>() {
@@ -234,28 +237,35 @@ update
     }
 
     // Values goes a bit all over the place when loading. This helps.
-    if (!vars.isLoading && current.quest != null && current.quest != "" && current.quest != vars.prevQuest) {
-        int order = 0;
+    if (!vars.isLoading && current.quest != null && current.quest != "") {
+        if (current.quest != vars.prevQuest) {
+            int order = 0;
 
-        if (vars.order.TryGetValue(current.quest, out order)) {
-            // only split if mission order has strictly increased.
-            if (vars.prevOrder < order) {
-                string split = "";
+            if (vars.order.TryGetValue(current.quest, out order)) {
+                // only split if mission order has strictly increased.
+                if (vars.prevOrder < order) {
+                    string split = "";
 
-                // need to test that previous quest is set to avoid splitting when resetting.
-                if (vars.prevQuest != "" && vars.splits.TryGetValue(current.quest, out split)) {
-                    print("Testing split: " + split);
-                    vars.split = settings[split];
+                    // need to test that previous quest is set to avoid splitting when resetting.
+                    if (vars.prevQuest != "" && vars.splits.TryGetValue(current.quest, out split)) {
+                        print("Testing split: " + split);
+                        vars.split = settings[split];
+                    }
+
+                    vars.prevOrder = order;
                 }
-
-                vars.prevOrder = order;
             }
+
+            print("Quest: " + current.quest);
+            // update to avoid rechecking vars.order too frequently
+            vars.prevQuest = current.quest;
         }
 
-        print("Quest: " + current.quest);
-        // update to avoid rechecking vars.order too frequently
-        vars.prevQuest = current.quest;
+        if (old.final_qte == 23 && current.final_qte == 24 && current.quest == "Final_End_03_Rais_Tower") {
+            vars.split = settings["final_end"];
+        }
     }
+
 }
 
 split
